@@ -1,5 +1,6 @@
 ﻿using System;
 using Adventure.Client.Sockets;
+using Adventure.Core.Commands;
 
 namespace Adventure.Client
 {
@@ -8,14 +9,17 @@ namespace Adventure.Client
         static void Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            SocketClient client = new JsonClient();
+            JsonClient client = new JsonClient();
             client.Start();
+            client.SendCommand(new PrintTextCommand("PrintTextCommand test!!!"));
             while (true)
             {
+                /*
                 Console.WriteLine("Message:");
                 var msg = Console.ReadLine();
                 client.SendMessage(msg);
                 client.Receive();
+                */
             }
         }
     }

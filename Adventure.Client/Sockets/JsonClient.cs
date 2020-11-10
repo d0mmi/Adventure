@@ -23,7 +23,7 @@ namespace Adventure.Client.Sockets
 
         public void Send(ICommand command)
         {
-
+            SendCommand(command);
         }
 
         public override void SendInitialMessage()

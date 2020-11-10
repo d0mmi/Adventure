@@ -20,8 +20,10 @@ namespace Adventure.Server.Sockets
             SendMessage(connection, msg);
         }
 
-        public void Send(ICommand command){
-
+        public void Send(ICommand command)
+        {
+            //TODO fix
+            SendCommand(null, command);
         }
 
         protected override void OnMessageRecieved(Socket connection, string msg)

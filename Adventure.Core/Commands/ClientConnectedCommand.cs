@@ -1,3 +1,5 @@
+using System;
+
 namespace Adventure.Core.Commands
 {
     public class ClientConnectedCommand : ICommand
@@ -9,7 +11,7 @@ namespace Adventure.Core.Commands
 
         void ICommand.ExecuteServer(ICommandSender sender)
         {
-
+            Console.WriteLine("Server: New Client Connected!");
         }
     }
 }
