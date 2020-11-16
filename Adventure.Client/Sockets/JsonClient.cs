@@ -33,8 +33,17 @@ namespace Adventure.Client.Sockets
 
         protected override void OnMessageRecieved(string msg)
         {
-            var cmd = JsonConvert.DeserializeObject<ICommand>(msg);
-            cmd.ExecuteServer(this);
+            Console.WriteLine("OnMessageRecieved");
+            var cmd = JsonConvert.DeserializeObject(msg, settings);
+            if (cmd != null)
+            {
+
+                ((ICommand)cmd).ExecuteClient(this);
+            }
+            else
+            {
+                Console.WriteLine("Cmd was null!");
+            }
         }
 
         protected override void OnConnect(Socket connection)

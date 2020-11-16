@@ -110,6 +110,7 @@ namespace Adventure.Client.Sockets
         }
         public override void Receive()
         {
+            Console.WriteLine("Start Receiving..");
             try
             {
                 // Create the state object.  
@@ -128,6 +129,7 @@ namespace Adventure.Client.Sockets
 
         protected void ReceiveCallback(IAsyncResult ar)
         {
+            String content = String.Empty;
             try
             {
                 // Retrieve the state object and the client socket
@@ -143,20 +145,23 @@ namespace Adventure.Client.Sockets
                     // There might be more data, so store the data received so far.  
                     state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
 
-                    // Get the rest of the data.  
-                    client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                        new AsyncCallback(ReceiveCallback), state);
+
+                    // Check for end-of-file tag. If it is not there, read
+                // more data.  
+                content = state.sb.ToString();
+                if (content.IndexOf("<EOF>") > -1)
+                {
+                    // All the data has been read from the
+                    // client. Display it on the console.  
+                    OnMessageRecieved(content.Substring(0, content.Length - 5));
+                    //Receive();
                 }
                 else
                 {
-                    // All the data has arrived; put it in response.  
-                    if (state.sb.Length > 1)
-                    {
-                        var msg = state.sb.ToString();
-                        OnMessageRecieved(msg.Substring(0,msg.Length-5));
-                    }
-                    // Signal that all bytes have been received.  
-                    receiveDone.Set();
+                    // Not all data received. Get more.  
+                    client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+                    new AsyncCallback(ReceiveCallback), state);
+                }
                 }
             }
             catch (Exception e)

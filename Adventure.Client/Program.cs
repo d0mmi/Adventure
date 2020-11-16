@@ -11,7 +11,6 @@ namespace Adventure.Client
             Console.WriteLine("Hello World!");
             JsonClient client = new JsonClient();
             client.Start();
-            client.SendCommand(new PrintTextCommand("PrintTextCommand test!!!"));
             while (true)
             {
                 /*

@@ -4,7 +4,7 @@ namespace Adventure.Core.Commands
 {
     public class PrintTextCommand : ICommand
     {
-        private string text;
+        public string text;
         public PrintTextCommand(string text)
         {
             this.text = text;

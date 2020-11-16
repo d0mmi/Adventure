@@ -10,7 +10,6 @@ namespace Adventure.Server
             Console.WriteLine("Hello World!");
             SocketServer server = new JsonServer();
             server.Start();
-            //listener.StopListening();
         }
     }
 

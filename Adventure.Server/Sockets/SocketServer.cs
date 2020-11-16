@@ -33,7 +33,7 @@ namespace Adventure.Server.Sockets
 
         public void SendMessage(Socket connection, string msg)
         {
-            byte[] msgBytes = Encoding.ASCII.GetBytes(msg);
+            byte[] msgBytes = Encoding.ASCII.GetBytes(msg + "<EOF>");
 
             connection.Send(msgBytes, 0, msgBytes.Length, SocketFlags.None);
         }

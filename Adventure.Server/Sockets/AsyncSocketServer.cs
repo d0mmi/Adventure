@@ -61,7 +61,7 @@ namespace Adventure.Server.Sockets
             // Get the socket that handles the client request.  
             Socket listener = (Socket)ar.AsyncState;
             Socket handler = listener.EndAccept(ar);
-            OnConnect(listener);
+            OnConnect(handler);
 
             // Create the state object.  
             StateObject state = new StateObject();
@@ -79,8 +79,10 @@ namespace Adventure.Server.Sockets
             StateObject state = (StateObject)ar.AsyncState;
             Socket handler = state.workSocket;
 
-            // Read data from the client socket.
-            int bytesRead = handler.EndReceive(ar);
+            try
+            {
+                // Read data from the client socket.
+                int bytesRead = handler.EndReceive(ar);
 
             if (bytesRead > 0)
             {
@@ -107,6 +109,12 @@ namespace Adventure.Server.Sockets
                     handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
                     new AsyncCallback(ReadCallback), state);
                 }
+            }
+            }
+            catch (SocketException e)
+            {
+                OnError(e.Message);
+                OnDisconnect(handler);
             }
         }
     }
