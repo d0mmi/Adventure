@@ -147,21 +147,32 @@ namespace Adventure.Client.Sockets
 
 
                     // Check for end-of-file tag. If it is not there, read
-                // more data.  
-                content = state.sb.ToString();
-                if (content.IndexOf("<EOF>") > -1)
-                {
-                    // All the data has been read from the
-                    // client. Display it on the console.  
-                    OnMessageRecieved(content.Substring(0, content.Length - 5));
-                    //Receive();
-                }
-                else
-                {
-                    // Not all data received. Get more.  
-                    client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                    new AsyncCallback(ReceiveCallback), state);
-                }
+                    // more data.  
+                    content = state.sb.ToString();
+                    if (content.IndexOf("<EOF>") > -1)
+                    {
+                        // All the data has been read from the
+                        // client. Display it on the console.  
+                        content = content.Substring(0, content.Length - 5);
+                        if (content.IndexOf("<EOF>") > -1)
+                        {
+                            foreach (var msg in content.Split("<EOF>"))
+                            {
+                                OnMessageRecieved(msg);
+                            }
+                        }
+                        else
+                        {
+                            OnMessageRecieved(content);
+                        }
+                        //Receive();
+                    }
+                    else
+                    {
+                        // Not all data received. Get more.  
+                        client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
+                        new AsyncCallback(ReceiveCallback), state);
+                    }
                 }
             }
             catch (Exception e)

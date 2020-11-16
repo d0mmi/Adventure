@@ -1,7 +1,5 @@
 
 using System;
-using System.Collections.Generic;
-using System.Net.Sockets;
 using Newtonsoft.Json;
 using Adventure.Core.Commands;
 
@@ -10,19 +8,12 @@ namespace Adventure.Server.Sockets
     public class JsonServer : AsyncSocketServer, ICommandSender
     {
 
-        List<Socket> connections;
-
-        public JsonServer()
-        {
-            connections = new List<Socket>();
-        }
-
         private readonly JsonSerializerSettings settings = new JsonSerializerSettings
         {
             TypeNameHandling = TypeNameHandling.All
         };
 
-        public void SendCommand(Socket connection, ICommand command)
+        public void SendCommand(SocketConnection connection, ICommand command)
         {
             var msg = JsonConvert.SerializeObject(command, settings);
             SendMessage(connection, msg);
@@ -33,7 +24,7 @@ namespace Adventure.Server.Sockets
             var i = 1;
             foreach (var con in connections)
             {
-                Console.WriteLine($"Sending Reply {i}..");
+                Console.WriteLine($"Sending Reply to connection: [{con.GetID()}]..");
                 SendCommand(con, command);
                 i++;
             }
@@ -47,7 +38,7 @@ namespace Adventure.Server.Sockets
 
         }
 
-        protected override void OnMessageRecieved(Socket connection, string msg)
+        public override void OnMessageRecieved(SocketConnection connection, string msg)
         {
             var cmd = JsonConvert.DeserializeObject(msg, settings);
             if (cmd != null)
@@ -61,19 +52,19 @@ namespace Adventure.Server.Sockets
             }
         }
 
-        protected override void OnConnect(Socket connection)
+        public override void OnConnect(SocketConnection connection)
         {
-            Console.WriteLine("New Connection found!");
-            connections.Add(connection);
+            Console.WriteLine("New Connection found: " + connection.GetID());
             SendCommand(connection, new TextInputCommand("Moin was geht?"));
         }
 
-        protected override void OnDisconnect(Socket connection)
+        public override void OnDisconnect(SocketConnection connection)
         {
-            Console.WriteLine("Client disconnected: " + connection.RemoteEndPoint.ToString());
+            Console.WriteLine($"Client [{connection.GetID()}] disconnected: " + connection.GetClient().RemoteEndPoint.ToString());
+            connections.Remove(connection);
         }
 
-        protected override void OnError(string msg)
+        public override void OnError(string msg)
         {
             Console.WriteLine("OnError: " + msg);
         }

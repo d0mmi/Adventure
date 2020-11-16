@@ -34,16 +34,23 @@ namespace Adventure.Client.Sockets
         protected override void OnMessageRecieved(string msg)
         {
             Console.WriteLine("OnMessageRecieved");
-            var cmd = JsonConvert.DeserializeObject(msg, settings);
-            if (cmd != null)
+            try
             {
-
-                ((ICommand)cmd).ExecuteClient(this);
+                var cmd = JsonConvert.DeserializeObject(msg, settings);
+                if (cmd != null)
+                {
+                    ((ICommand)cmd).ExecuteClient(this);
+                }
+                else
+                {
+                    Console.WriteLine("Cmd was null!");
+                }
             }
-            else
+            catch (JsonReaderException e)
             {
-                Console.WriteLine("Cmd was null!");
+                OnError("Error while deserializing Message: " + msg);
             }
+            Receive();
         }
 
         protected override void OnConnect(Socket connection)
@@ -58,7 +65,7 @@ namespace Adventure.Client.Sockets
 
         protected override void OnError(string msg)
         {
-
+            Console.WriteLine("OnError: " + msg);
         }
     }
 }
