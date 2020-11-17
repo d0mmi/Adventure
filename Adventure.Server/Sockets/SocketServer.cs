@@ -10,10 +10,10 @@ namespace Adventure.Server.Sockets
 
     public abstract class SocketServer
     {
-        
+
         protected List<SocketConnection> connections;
 
-        
+
 
         public SocketServer()
         {
@@ -45,9 +45,14 @@ namespace Adventure.Server.Sockets
 
         public void SendMessage(SocketConnection connection, string msg)
         {
+            SendMessage(connection.GetClient(), msg);
+        }
+
+        public void SendMessage(Socket connection, string msg)
+        {
             byte[] msgBytes = Encoding.ASCII.GetBytes(msg + "<EOF>");
 
-            connection.GetClient().Send(msgBytes, 0, msgBytes.Length, SocketFlags.None);
+            connection.Send(msgBytes, 0, msgBytes.Length, SocketFlags.None);
         }
 
         public abstract void OnMessageRecieved(SocketConnection connection, string msg);

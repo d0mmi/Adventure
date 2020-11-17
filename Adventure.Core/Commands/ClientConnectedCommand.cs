@@ -1,19 +1,20 @@
 using System;
+using System.Net.Sockets;
 
 namespace Adventure.Core.Commands
 {
     public class ClientConnectedCommand : ICommand
     {
-        void ICommand.ExecuteClient(ICommandSender sender)
+        void ICommand.ExecuteClient(ICommandSender sender, Socket responseReceiver)
         {
-            Console.WriteLine("Client: Server approved  new Connection!");
-            
+            throw new NotImplementedException();
         }
 
-        void ICommand.ExecuteServer(ICommandSender sender)
+        void ICommand.ExecuteServer(ICommandSender sender, Socket responseReceiver)
         {
-            Console.WriteLine("Server: New Client Connected!");
-            sender.Send(new ClientConnectedCommand());
+            sender.Send(new PrintTextCommand("Hello traveler, what is your name?"), responseReceiver);
+            sender.Send(new TextInputCommand(), responseReceiver);
+
         }
     }
 }

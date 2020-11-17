@@ -156,6 +156,7 @@ namespace Adventure.Client.Sockets
                         content = content.Substring(0, content.Length - 5);
                         if (content.IndexOf("<EOF>") > -1)
                         {
+                            Console.WriteLine("Recieved multiple Messages:");
                             foreach (var msg in content.Split("<EOF>"))
                             {
                                 OnMessageRecieved(msg);

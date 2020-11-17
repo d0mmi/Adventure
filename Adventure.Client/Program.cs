@@ -1,6 +1,5 @@
 ﻿using System;
 using Adventure.Client.Sockets;
-using Adventure.Core.Commands;
 
 namespace Adventure.Client
 {

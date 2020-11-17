@@ -1,23 +1,24 @@
 using System;
+using System.Net.Sockets;
 
 namespace Adventure.Core.Commands
 {
     public class PrintTextCommand : ICommand
     {
-        public string text;
+        public string Text;
         public PrintTextCommand(string text)
         {
-            this.text = text;
+            this.Text = text;
         }
 
-        void ICommand.ExecuteClient(ICommandSender sender)
+        void ICommand.ExecuteClient(ICommandSender sender, Socket responseReceiver)
         {
-            Console.WriteLine("Client: " + text);
+            Console.WriteLine(Text);
         }
 
-        void ICommand.ExecuteServer(ICommandSender sender)
+        void ICommand.ExecuteServer(ICommandSender sender, Socket responseReceiver)
         {
-            Console.WriteLine("Server: " + text);
+            Console.WriteLine(Text);
         }
     }
 }

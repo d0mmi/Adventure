@@ -1,5 +1,6 @@
 
 using System;
+using System.Net.Sockets;
 using Newtonsoft.Json;
 using Adventure.Core.Commands;
 
@@ -13,10 +14,15 @@ namespace Adventure.Server.Sockets
             TypeNameHandling = TypeNameHandling.All
         };
 
-        public void SendCommand(SocketConnection connection, ICommand command)
+        public void SendCommand(Socket connection, ICommand command)
         {
             var msg = JsonConvert.SerializeObject(command, settings);
             SendMessage(connection, msg);
+        }
+
+        public void SendCommand(SocketConnection connection, ICommand command)
+        {
+            SendCommand(connection.GetClient(), command);
         }
 
         public void BroadcastCommand(ICommand command)
@@ -30,12 +36,9 @@ namespace Adventure.Server.Sockets
             }
         }
 
-        public void Send(ICommand command)
+        public void Send(ICommand command, Socket receiver)
         {
-            //TODO fix
-            Console.WriteLine("Sending Replies..");
-            BroadcastCommand(command);
-
+            SendCommand(receiver, command);
         }
 
         public override void OnMessageRecieved(SocketConnection connection, string msg)
@@ -44,7 +47,7 @@ namespace Adventure.Server.Sockets
             if (cmd != null)
             {
 
-                ((ICommand)cmd).ExecuteServer(this);
+                ((ICommand)cmd).ExecuteServer(this, connection.GetClient());
             }
             else
             {
@@ -55,7 +58,6 @@ namespace Adventure.Server.Sockets
         public override void OnConnect(SocketConnection connection)
         {
             Console.WriteLine("New Connection found: " + connection.GetID());
-            SendCommand(connection, new TextInputCommand("Moin was geht?"));
         }
 
         public override void OnDisconnect(SocketConnection connection)

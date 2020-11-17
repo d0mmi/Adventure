@@ -1,30 +1,25 @@
 using System;
+using System.Net.Sockets;
 
 namespace Adventure.Core.Commands
 {
     public class TextInputCommand : ICommand
     {
-        
-        public string text;
-        public TextInputCommand(string text)
+
+        public string Response;
+        public TextInputCommand()
         {
-            this.text = text;
-        }
-        void ICommand.ExecuteClient(ICommandSender sender)
-        {
-            SendInput(sender);
         }
 
-        void ICommand.ExecuteServer(ICommandSender sender)
+        void ICommand.ExecuteClient(ICommandSender sender, Socket responseReceiver)
         {
-            SendInput(sender);
+            Response = Console.ReadLine();
+            sender.Send(this, null);
         }
 
-        protected void SendInput(ICommandSender sender)
+        void ICommand.ExecuteServer(ICommandSender sender, Socket responseReceiver)
         {
-            Console.WriteLine(text + ":");
-            var msg = Console.ReadLine();
-            sender.Send(new PrintTextCommand(msg));
+            throw new NotImplementedException();
         }
 
     }

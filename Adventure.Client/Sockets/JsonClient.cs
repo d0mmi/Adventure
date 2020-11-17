@@ -21,9 +21,10 @@ namespace Adventure.Client.Sockets
             SendMessage(msg);
         }
 
-        public void Send(ICommand command)
+        public void Send(ICommand command, Socket receiver)
         {
             SendCommand(command);
+            Receive();
         }
 
         public override void SendInitialMessage()
@@ -33,13 +34,12 @@ namespace Adventure.Client.Sockets
 
         protected override void OnMessageRecieved(string msg)
         {
-            Console.WriteLine("OnMessageRecieved");
             try
             {
                 var cmd = JsonConvert.DeserializeObject(msg, settings);
                 if (cmd != null)
                 {
-                    ((ICommand)cmd).ExecuteClient(this);
+                    ((ICommand)cmd).ExecuteClient(this, connection);
                 }
                 else
                 {
@@ -50,7 +50,6 @@ namespace Adventure.Client.Sockets
             {
                 OnError("Error while deserializing Message: " + msg);
             }
-            Receive();
         }
 
         protected override void OnConnect(Socket connection)
@@ -60,7 +59,7 @@ namespace Adventure.Client.Sockets
 
         protected override void OnDisconnect(Socket connection)
         {
-
+            Console.WriteLine("Disconnected!");
         }
 
         protected override void OnError(string msg)
