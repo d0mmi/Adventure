@@ -1,13 +1,22 @@
 
 using System;
 using System.Net.Sockets;
+using System.Collections.Generic;
 using Newtonsoft.Json;
 using Adventure.Core.Commands;
+using Adventure.Server.GameLogic;
+using Adventure.Server.GameLogic.Scenes;
 
 namespace Adventure.Server.Sockets
 {
     public class JsonServer : AsyncSocketServer, ICommandSender
     {
+        private Dictionary<Guid, MainGame> _runningGames;
+
+        public JsonServer()
+        {
+            _runningGames = new Dictionary<Guid, MainGame>();
+        }
 
         private readonly JsonSerializerSettings settings = new JsonSerializerSettings
         {
@@ -69,6 +78,50 @@ namespace Adventure.Server.Sockets
         public override void OnError(string msg)
         {
             Console.WriteLine("OnError: " + msg);
+        }
+
+        private MainGame GetOrCreateGame(Guid clientId)
+        {
+            if (!_runningGames.TryGetValue(clientId, out var game))
+            {
+                game = CreateGame();
+                _runningGames.Add(clientId, game);
+
+                return game;
+            }
+
+            Console.WriteLine($"Found existing Game for Client [{clientId}].");
+
+            if (game.Status == GameStatus.Aborted || game.Status == GameStatus.Finished)
+            {
+                Console.WriteLine($"Existing Game for Client [{clientId}] was aborted or finished, restarting..");
+                FinalizeGame(game);
+                _runningGames.Remove(clientId);
+
+                game = CreateGame();
+                _runningGames.Add(clientId, game);
+            }
+            return game;
+        }
+
+        private MainGame CreateGame()
+        {
+            var game = new MainGame();
+            // game.OnEnterScene += OnEnterScene;
+            return game;
+        }
+
+        private void FinalizeGame(MainGame game)
+        {
+            // game.OnEnterScene -= OnEnterScene;
+        }
+
+        const string CallToActionText = "What do you want to do?";
+        private void OnEnterScene(MainGame game, Scene scene)
+        {
+            Console.WriteLine($"[{game.Client.GetID()}] - OnEnterScene: {scene.Id}");
+            Send(new PrintTextCommand($"{scene.Description}\n\n{CallToActionText}"), game.Client.GetClient());
+            Send(new TextInputCommand(), game.Client.GetClient());
         }
     }
 }

@@ -9,11 +9,11 @@ namespace Adventure.Server.Sockets
 
     public class SocketConnection
     {
-        private int _id;
+        private Guid _id;
         private Socket _client;
         private SocketServer _server;
 
-        public SocketConnection(int id, Socket client, SocketServer server)
+        public SocketConnection(Guid id, Socket client, SocketServer server)
         {
             this._id = id;
             _client = client;
@@ -31,7 +31,7 @@ namespace Adventure.Server.Sockets
                 new AsyncCallback(ReadCallback), state);
         }
 
-        public int GetID()
+        public Guid GetID()
         {
             return _id;
         }
@@ -118,8 +118,7 @@ namespace Adventure.Server.Sockets
                     // Program is suspended while waiting for an incoming connection.  
                     var connection = listener.Accept();
                     connection.ReceiveTimeout = -1;
-                    var id = connections.Count == 0 ? 0 : connections[connections.Count - 1].GetID() + 1;
-                    var socketConnection = new SocketConnection(id, connection, this);
+                    var socketConnection = new SocketConnection(Guid.NewGuid(), connection, this);
                     connections.Add(socketConnection);
                     OnConnect(socketConnection);
                 }

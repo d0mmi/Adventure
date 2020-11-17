@@ -5,7 +5,7 @@ namespace Adventure.Server.GameLogic.Scenes
 {
     public class Scene
     {
-        protected string description;
+        public string Description;
         protected Inventory sceneInventory;
         protected IEnumerable<Action> Actions;
 
