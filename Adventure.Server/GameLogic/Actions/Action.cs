@@ -57,7 +57,7 @@ namespace Adventure.Server.GameLogic.Actions
                     else
                     {
                         var parameters = new string[parts.Length - 1];
-                        for (var i = 0; i < parts.Length; i++)
+                        for (var i = 0; i < parameters.Length; i++)
                         {
                             parameters[i] = parts[i + 1];
                         }
