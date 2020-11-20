@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Net;
 using Adventure.Client.Sockets;
 
 namespace Adventure.Client
@@ -9,16 +10,7 @@ namespace Adventure.Client
         {
             Console.WriteLine("Hello World!");
             JsonClient client = new JsonClient();
-            client.Start();
-            while (true)
-            {
-                /*
-                Console.WriteLine("Message:");
-                var msg = Console.ReadLine();
-                client.SendMessage(msg);
-                client.Receive();
-                */
-            }
+            client.StartClient(Dns.GetHostName(), 11000);
         }
     }
 

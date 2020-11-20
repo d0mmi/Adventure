@@ -2,8 +2,8 @@ namespace Adventure.Server.GameLogic.Scenes
 {
     public class Player
     {
-        protected string Name;
-        protected Inventory Inventory;
+        public string Name { get; set; }
+        public Inventory Inventory { get; }
 
     }
 }

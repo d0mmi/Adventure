@@ -5,13 +5,14 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Adventure.Core.Commands;
 using Adventure.Server.GameLogic;
+using Adventure.Server.GameLogic.Actions;
 using Adventure.Server.GameLogic.Scenes;
 
 namespace Adventure.Server.Sockets
 {
     public class JsonServer : AsyncSocketServer, ICommandSender
     {
-        private Dictionary<Guid, MainGame> _runningGames;
+        private Dictionary<Guid, MainGame> _runningGames = new Dictionary<Guid, MainGame>();
 
         public JsonServer()
         {
@@ -52,15 +53,24 @@ namespace Adventure.Server.Sockets
 
         public override void OnMessageRecieved(SocketConnection connection, string msg)
         {
-            var cmd = JsonConvert.DeserializeObject(msg, settings);
-            if (cmd != null)
+            var command = (ICommand)JsonConvert.DeserializeObject(msg, new JsonSerializerSettings
             {
+                TypeNameHandling = TypeNameHandling.All
+            });
 
-                ((ICommand)cmd).ExecuteServer(this, connection.GetClient());
+            var game = GetOrCreateGame(connection.GetID());
+            if (command is ClientConnectedCommand)
+            {
+                Console.WriteLine("command is ClientConnectedCommand");
+                game.Start(connection);
+            }
+            else if (command is TextInputCommand)
+            {
+                game.PerformAction((command as TextInputCommand).Response);
             }
             else
             {
-                Console.WriteLine("Cmd was null!");
+                Console.WriteLine("command is unknown");
             }
         }
 
@@ -107,20 +117,40 @@ namespace Adventure.Server.Sockets
         private MainGame CreateGame()
         {
             var game = new MainGame();
-            // game.OnEnterScene += OnEnterScene;
+            game.OnEnterScene += OnEnterScene;
+            game.OnWrongInput += OnWrongInput;
+            game.OnAction += OnAction;
             return game;
         }
 
         private void FinalizeGame(MainGame game)
         {
-            // game.OnEnterScene -= OnEnterScene;
+            game.OnEnterScene += OnEnterScene;
+            game.OnWrongInput += OnWrongInput;
+            game.OnAction += OnAction;
         }
 
+        const string clearText = "\n\n\n\n\n\n\n\n\n\n";
         const string CallToActionText = "What do you want to do?";
+        const string InvalidInputText = "Your Input was not valid!";
         private void OnEnterScene(MainGame game, Scene scene)
         {
             Console.WriteLine($"[{game.Client.GetID()}] - OnEnterScene: {scene.Id}");
-            Send(new PrintTextCommand($"{scene.Description}\n\n{CallToActionText}"), game.Client.GetClient());
+            Send(new PrintTextCommand($"{clearText}{scene.Description}\n\n{CallToActionText}"), game.Client.GetClient());
+            Send(new TextInputCommand(), game.Client.GetClient());
+        }
+
+        private void OnWrongInput(MainGame game, Scene scene)
+        {
+            Console.WriteLine($"[{game.Client.GetID()}] - OnWrongInput: {scene.Id}");
+            Send(new PrintTextCommand($"{clearText}{scene.Description}\n\n{InvalidInputText}\n\n{CallToActionText}"), game.Client.GetClient());
+            Send(new TextInputCommand(), game.Client.GetClient());
+        }
+
+        private void OnAction(MainGame game, ActionResult result)
+        {
+            Console.WriteLine($"[{game.Client.GetID()}] - OnAction");
+            Send(new PrintTextCommand($"{result.Description}\n\n{CallToActionText}"), game.Client.GetClient());
             Send(new TextInputCommand(), game.Client.GetClient());
         }
     }

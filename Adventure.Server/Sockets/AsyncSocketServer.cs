@@ -24,11 +24,38 @@ namespace Adventure.Server.Sockets
 
         private void HandleConnection()
         {
-            // Create the state object.  
-            StateObject state = new StateObject();
-            state.workSocket = _client;
-            _client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                new AsyncCallback(ReadCallback), state);
+            try
+            {
+                while (true)
+                {
+                    var messageLengthBytes = new byte[4];
+                    byte[] messageBytes = null;
+
+                    var bytesRec = _client.Receive(messageLengthBytes);
+                    var messageLength = BitConverter.ToInt32(messageLengthBytes);
+
+                    if (bytesRec != 4)
+                    {
+                        Console.WriteLine($"Error receiving packet length. Expected 4, but got {bytesRec}.");
+                    }
+                    else
+                    {
+
+                        messageBytes = new byte[messageLength];
+                        bytesRec = _client.Receive(messageBytes);
+                        var data = Encoding.ASCII.GetString(messageBytes, 0, bytesRec);
+
+                        _server.OnMessageRecieved(this, data);
+                    }
+                }
+            }
+            catch (SocketException e)
+            {
+                if (e.SocketErrorCode == SocketError.ConnectionReset)
+                {
+                    _server.OnDisconnect(this);
+                }
+            }
         }
 
         public Guid GetID()
@@ -40,68 +67,6 @@ namespace Adventure.Server.Sockets
         {
             return _client;
         }
-        public void ReadCallback(IAsyncResult ar)
-        {
-            String content = String.Empty;
-
-            // Retrieve the state object and the handler socket  
-            // from the asynchronous state object.  
-            StateObject state = (StateObject)ar.AsyncState;
-            Socket handler = state.workSocket;
-
-            try
-            {
-                // Read data from the client socket.
-                int bytesRead = handler.EndReceive(ar);
-
-                if (bytesRead > 0)
-                {
-                    // There  might be more data, so store the data received so far.  
-                    state.sb.Append(Encoding.ASCII.GetString(
-                        state.buffer, 0, bytesRead));
-
-                    // Check for end-of-file tag. If it is not there, read
-                    // more data.  
-                    content = state.sb.ToString();
-                    if (content.IndexOf("<EOF>") > -1)
-                    {
-                        // All the data has been read from the
-                        // client. Display it on the console.  
-                        _server.OnMessageRecieved(this, content.Substring(0, content.Length - 5));
-                        StateObject newState = new StateObject();
-                        newState.workSocket = handler;
-                        handler.BeginReceive(newState.buffer, 0, StateObject.BufferSize, 0,
-                    new AsyncCallback(ReadCallback), newState);
-                    }
-                    else
-                    {
-                        // Not all data received. Get more.  
-                        handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                        new AsyncCallback(ReadCallback), state);
-                    }
-                }
-            }
-            catch (SocketException e)
-            {
-                _server.OnError(e.Message);
-                _server.OnDisconnect(this);
-            }
-        }
-    }
-
-    public class StateObject
-    {
-        // Size of receive buffer.  
-        public const int BufferSize = 1024;
-
-        // Receive buffer.  
-        public byte[] buffer = new byte[BufferSize];
-
-        // Received data string.
-        public StringBuilder sb = new StringBuilder();
-
-        // Client socket.
-        public Socket workSocket = null;
     }
 
     public abstract class AsyncSocketServer : SocketServer

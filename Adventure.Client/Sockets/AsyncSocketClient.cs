@@ -153,18 +153,35 @@ namespace Adventure.Client.Sockets
                     {
                         // All the data has been read from the
                         // client. Display it on the console.  
-                        content = content.Substring(0, content.Length - 5);
-                        if (content.IndexOf("<EOF>") > -1)
+                        if (content.IndexOf("<EOF>") < content.Length)
                         {
-                            Console.WriteLine("Recieved multiple Messages:");
-                            foreach (var msg in content.Split("<EOF>"))
+                            var messages = content.Split("<EOF>");
+                            for (int i = 0; i < messages.Length; i++)
                             {
-                                OnMessageRecieved(msg);
+                                if (i < messages.Length - 1)
+                                {
+                                    OnMessageRecieved(content.Split("<EOF>")[i]);
+                                }
+                                else
+                                {
+
+                                    // Not all data received. Get more.
+                                    Console.WriteLine("Remaining string: ");
+                                    Console.WriteLine("bla" + messages[i] + "bla");
+                                    var newState = new StateObject();
+                                    newState.buffer = new byte[StateObject.BufferSize];
+                                    StringBuilder sb = new StringBuilder(messages[i]);
+                                    newState.sb = sb;
+                                    newState.workSocket = state.workSocket;
+                                    client.BeginReceive(newState.buffer, 0, StateObject.BufferSize, 0,
+                                                                new AsyncCallback(ReceiveCallback), newState);
+                                }
                             }
+
                         }
                         else
                         {
-                            OnMessageRecieved(content);
+                            OnMessageRecieved(content.Substring(0, content.Length - 5));
                         }
                         //Receive();
                     }

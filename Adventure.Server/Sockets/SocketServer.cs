@@ -48,11 +48,14 @@ namespace Adventure.Server.Sockets
             SendMessage(connection.GetClient(), msg);
         }
 
-        public void SendMessage(Socket connection, string msg)
+        protected void SendMessage(Socket client, string message)
         {
-            byte[] msgBytes = Encoding.ASCII.GetBytes(msg + "<EOF>");
+            var responseBuffer = new byte[1024];
+            var msg = (byte[])Encoding.ASCII.GetBytes(message);
+            var messageLengthBytes = BitConverter.GetBytes(message.Length);
 
-            connection.Send(msgBytes, 0, msgBytes.Length, SocketFlags.None);
+            client.Send(messageLengthBytes);
+            client.Send(msg);
         }
 
         public abstract void OnMessageRecieved(SocketConnection connection, string msg);

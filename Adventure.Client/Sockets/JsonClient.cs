@@ -7,7 +7,7 @@ using Adventure.Core.Commands;
 
 namespace Adventure.Client.Sockets
 {
-    class JsonClient : AsyncSocketClient, ICommandSender
+    class JsonClient : AlternateSocketClient, ICommandSender
     {
 
         private readonly JsonSerializerSettings settings = new JsonSerializerSettings
@@ -24,22 +24,22 @@ namespace Adventure.Client.Sockets
         public void Send(ICommand command, Socket receiver)
         {
             SendCommand(command);
-            Receive();
         }
 
-        public override void SendInitialMessage()
+        protected override void SendInitialMessage()
         {
+            Console.WriteLine("SendInitialMessage");
             SendCommand(new ClientConnectedCommand());
         }
 
-        protected override void OnMessageRecieved(string msg)
+        protected override void OnMessageReceived(Socket socket, string message)
         {
             try
             {
-                var cmd = JsonConvert.DeserializeObject(msg, settings);
+                var cmd = JsonConvert.DeserializeObject(message, settings);
                 if (cmd != null)
                 {
-                    ((ICommand)cmd).ExecuteClient(this, connection);
+                    ((ICommand)cmd).ExecuteClient(this, socket);
                 }
                 else
                 {
@@ -48,23 +48,8 @@ namespace Adventure.Client.Sockets
             }
             catch (JsonReaderException e)
             {
-                OnError("Error while deserializing Message: " + msg);
+                Console.WriteLine("Error while deserializing Message: " + message);
             }
-        }
-
-        protected override void OnConnect(Socket connection)
-        {
-            Console.WriteLine("Connected!");
-        }
-
-        protected override void OnDisconnect(Socket connection)
-        {
-            Console.WriteLine("Disconnected!");
-        }
-
-        protected override void OnError(string msg)
-        {
-            Console.WriteLine("OnError: " + msg);
         }
     }
 }
