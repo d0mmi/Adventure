@@ -2,23 +2,23 @@ using System.Collections.Generic;
 
 namespace Adventure.Server.GameLogic.Actions
 {
-    public class Action
+    public abstract class Action
     {
         public string Verb { get; }
 
-        private string[] _allowedParameters;
+        public string[] allowedParameters { get; }
         private ActionResult _result;
 
         public Action(string verb, ActionResult result, params string[] allowedParameters)
         {
             Verb = verb;
             _result = result;
-            _allowedParameters = allowedParameters;
+            this.allowedParameters = allowedParameters;
         }
 
         private ActionResult Perform(string[] parameters)
         {
-            if (parameters.Length == 0 && _allowedParameters.Length == 0)
+            if (parameters.Length == 0 && allowedParameters.Length == 0)
             {
                 return _result.Perform("");
             }
@@ -26,11 +26,20 @@ namespace Adventure.Server.GameLogic.Actions
             {
                 for (var i = 0; i < parameters.Length; i++)
                 {
-                    for (var j = 0; j < _allowedParameters.Length; j++)
+                    for (var j = 0; j < allowedParameters.Length; j++)
                     {
-                        if (parameters[i].ToLower() == _allowedParameters[j].ToLower())
+                        if (parameters[i].ToLower() == allowedParameters[j].ToLower())
                         {
                             return _result.Perform(parameters[i]);
+                        }
+                        else if (allowedParameters[i].StartsWith("<") && allowedParameters[i].EndsWith(">"))
+                        {
+                            var parameter = "";
+                            foreach (var p in parameters)
+                            {
+                                parameter += p + " ";
+                            }
+                            return _result.Perform(parameter.Trim());
                         }
                     }
                 }

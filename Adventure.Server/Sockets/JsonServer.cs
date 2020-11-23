@@ -132,7 +132,7 @@ namespace Adventure.Server.Sockets
 
         const string clearText = "\n\n\n\n\n\n\n\n\n\n";
         const string CallToActionText = "What do you want to do?";
-        const string InvalidInputText = "Your Input was not valid!";
+        const string InvalidInputText = "Your Input was not valid!\n Use 'help' to display all actions.";
         private void OnEnterScene(MainGame game, Scene scene)
         {
             Console.WriteLine($"[{game.Client.GetID()}] - OnEnterScene: {scene.Id}");
@@ -149,9 +149,12 @@ namespace Adventure.Server.Sockets
 
         private void OnAction(MainGame game, ActionResult result)
         {
-            Console.WriteLine($"[{game.Client.GetID()}] - OnAction");
-            Send(new PrintTextCommand($"{result.Description}\n\n{CallToActionText}"), game.Client.GetClient());
-            Send(new TextInputCommand(), game.Client.GetClient());
+            if (result.Description != null && result.Description.Length > 0)
+            {
+                Console.WriteLine($"[{game.Client.GetID()}] - OnAction");
+                Send(new PrintTextCommand($"{result.Description}\n\n{CallToActionText}"), game.Client.GetClient());
+                Send(new TextInputCommand(), game.Client.GetClient());
+            }
         }
     }
 }

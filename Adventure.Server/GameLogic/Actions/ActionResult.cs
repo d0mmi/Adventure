@@ -4,12 +4,9 @@ namespace Adventure.Server.GameLogic.Actions
 {
     public abstract class ActionResult
     {
-        public string Description { get; }
+        public string Description { get; protected set; }
 
 
-        public ActionResult Perform(string param)
-        {
-            return null;
-        }
+        public abstract ActionResult Perform(string param);
     }
 }

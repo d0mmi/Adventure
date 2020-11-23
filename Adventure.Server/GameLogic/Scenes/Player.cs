@@ -5,5 +5,11 @@ namespace Adventure.Server.GameLogic.Scenes
         public string Name { get; set; }
         public Inventory Inventory { get; }
 
+        public Player()
+        {
+            Name = "";
+            Inventory = new Inventory();
+        }
+
     }
 }

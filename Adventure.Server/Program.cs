@@ -7,11 +7,10 @@ namespace Adventure.Server
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
             SocketServer server = new JsonServer();
             server.Start();
         }
     }
 
-    
+
 }

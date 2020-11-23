@@ -13,11 +13,18 @@ namespace Adventure.Server.GameLogic.Scenes
 
         private readonly List<Actions.Action> _actions = new List<Actions.Action>();
 
-        public Scene(string id, string description, IEnumerable<Actions.Action> actions)
+        public Scene(string id, string description, List<Actions.Action> actions, MainGame game)
         {
             Id = id;
             Description = description;
             _actions.AddRange(actions);
+            _actions.AddRange(new Actions.Action[]{
+                new InvestigateAction(game),
+                new TakeAction(game),
+                new DropAction(game),
+                new InventoryAction(game),
+                new HelpAction(_actions),
+            });
         }
 
         public void Enter()
@@ -32,7 +39,15 @@ namespace Adventure.Server.GameLogic.Scenes
             {
                 try
                 {
-                    return action.PerformIfVerbValid(actionString);
+                    if (action != null)
+                    {
+                        var result = action.PerformIfVerbValid(actionString);
+                        return result;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Action is null");
+                    }
                 }
                 catch (System.Exception e)
                 {
@@ -41,6 +56,8 @@ namespace Adventure.Server.GameLogic.Scenes
                     {
                         Console.WriteLine(e.Message);
                         Console.WriteLine(e.StackTrace);
+                        Console.WriteLine(e.Source);
+                        Console.WriteLine(e.InnerException);
                     }
                 }
             }

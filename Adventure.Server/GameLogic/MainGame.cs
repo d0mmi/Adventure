@@ -26,18 +26,23 @@ namespace Adventure.Server.GameLogic
         public IReadOnlyDictionary<string, Scene> Scenes => _scenes;
 
         private Scene _currentScene;
-        private Player _player;
+        public Player player { get; }
 
         private readonly Dictionary<string, Scene> _scenes = new Dictionary<string, Scene>();
         public MainGame()
         {
             CreateNewGame();
-            _player = new Player();
+            player = new Player();
         }
         public void Start(SocketConnection connection)
         {
             Client = connection;
             EnterScene("forest");
+        }
+
+        public Scene GetCurrentScene()
+        {
+            return _currentScene;
         }
 
         public void EnterScene(string id)
@@ -56,7 +61,8 @@ namespace Adventure.Server.GameLogic
         {
             try
             {
-                OnAction?.Invoke(this, _currentScene.PerformAction(action));
+                var result = _currentScene.PerformAction(action);
+                OnAction?.Invoke(this, result);
             }
             catch (ActionNotValidException e)
             {
@@ -72,6 +78,8 @@ namespace Adventure.Server.GameLogic
         private void CreateScenes()
         {
             AddScene(CreateForestScene());
+            AddScene(CreateHouseScene());
+            AddScene(CreateCityScene());
         }
 
         private void AddScene(Scene scene)
@@ -81,16 +89,33 @@ namespace Adventure.Server.GameLogic
 
         private Scene CreateForestScene()
         {
-            var description = @"Du stehst in einem dichten Wald. Die Sonne verbirgt sich über großem Geäst. 
-In der Nähe zwitschern einige Vögel eine dir seltsam bekannte Melodie.
-Der Weg zu deiner Rechten führt weiter an ein unscheinbares Haus, aus dessen kleinem Kamin dichter Rauch quillt.
-Zu deiner Linken befindet sich ein tiefer Abgrund, bei dessen Anblick dir ein kalter Schauer über den Rücken läuft.";
-            var actions = new[]
-            {
-                new Action("gehe", null, "links", "rechts"),
-            };
+            var description = @"You are in a dark forest.";
 
-            return new Scene("forest", description, actions);
+            List<Action> actions = new List<Action>();
+            actions.Add(new SwitchSceneAction(new SwitchSceneResult(this, "house", "city"), "left", "right"));
+
+            return new Scene("forest", description, actions, this);
+        }
+
+        private Scene CreateHouseScene()
+        {
+            var description = @"You are approching a big scary house.";
+
+            List<Action> actions = new List<Action>();
+            actions.Add(new SwitchSceneAction(new SwitchSceneResult(this, null, null, null, "forest"), "back"));
+            var house = new Scene("house", description, actions, this);
+            house.Inventory.Add(new Item("Useless Stick"));
+            return house;
+        }
+
+        private Scene CreateCityScene()
+        {
+            var description = @"You are entering a beautiful City.";
+
+            List<Action> actions = new List<Action>();
+            actions.Add(new SwitchSceneAction(new SwitchSceneResult(this, null, null, null, "forest"), "back"));
+
+            return new Scene("city", description, actions, this);
         }
     }
 }

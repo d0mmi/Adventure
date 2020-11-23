@@ -5,6 +5,13 @@ namespace Adventure.Server.GameLogic.Scenes
     public class Item
     {
         protected Guid id;
-        protected string name;
+        public string name { get; }
+
+
+        public Item(string name)
+        {
+            id = Guid.NewGuid();
+            this.name = name;
+        }
     }
 }

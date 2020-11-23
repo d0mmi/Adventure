@@ -12,14 +12,15 @@ namespace Adventure.Server.Sockets
         private Guid _id;
         private Socket _client;
         private SocketServer _server;
+        private Thread _thread;
 
         public SocketConnection(Guid id, Socket client, SocketServer server)
         {
             this._id = id;
             _client = client;
             _server = server;
-            var thread = new Thread(HandleConnection);
-            thread.Start();
+            _thread = new Thread(HandleConnection);
+            _thread.Start();
         }
 
         private void HandleConnection()
@@ -54,6 +55,7 @@ namespace Adventure.Server.Sockets
                 if (e.SocketErrorCode == SocketError.ConnectionReset)
                 {
                     _server.OnDisconnect(this);
+                    _thread.Interrupt();
                 }
             }
         }
