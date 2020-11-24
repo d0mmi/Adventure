@@ -35,10 +35,23 @@ namespace Adventure.Server.GameLogic.Actions
                 }
                 text += table.ToString();
                 Description = text;
-                return this;
+            }
+            else
+            {
+                Description = "You investigate this location, but could not find any Items on the ground.";
             }
 
-            Description = "You investigate this location, but could not find anything.";
+            if (scene.Npcs.Count > 0)
+            {
+                foreach (var npc in scene.Npcs)
+                {
+                    Description += "\n";
+                    Description += npc.Description;
+                    Description += "\n";
+                    Description += $"The name of this Person is '{npc.Name}'";
+                }
+            }
+
             return this;
         }
     }

@@ -12,17 +12,22 @@ namespace Adventure.Server.GameLogic.Scenes
         public IEnumerable<Actions.Action> Actions => _actions;
 
         private readonly List<Actions.Action> _actions = new List<Actions.Action>();
+        public readonly List<Npc> Npcs = new List<Npc>();
 
-        public Scene(string id, string description, List<Actions.Action> actions, MainGame game)
+        public Scene(string id, string description, List<Actions.Action> actions, MainGame game) : this(id, description, actions, game, new List<Npc>()) { }
+
+        public Scene(string id, string description, List<Actions.Action> actions, MainGame game, List<Npc> npcs)
         {
             Id = id;
             Description = description;
+            Npcs.AddRange(npcs);
             _actions.AddRange(actions);
             _actions.AddRange(new Actions.Action[]{
                 new InvestigateAction(game),
                 new TakeAction(game),
                 new DropAction(game),
                 new InventoryAction(game),
+                new ConfrontAction(game),
                 new HelpAction(_actions),
             });
         }

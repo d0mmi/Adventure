@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Adventure.Core.Commands;
 using Adventure.Server.GameLogic;
 using Adventure.Server.GameLogic.Actions;
+using Adventure.Server.GameLogic.Dialog;
 using Adventure.Server.GameLogic.Scenes;
 
 namespace Adventure.Server.Sockets
@@ -120,19 +121,26 @@ namespace Adventure.Server.Sockets
             game.OnEnterScene += OnEnterScene;
             game.OnWrongInput += OnWrongInput;
             game.OnAction += OnAction;
+            game.OnDialog += OnDialog;
+            game.OnWrongDialogInput += OnWrongDialogInput;
             return game;
         }
 
         private void FinalizeGame(MainGame game)
         {
-            game.OnEnterScene += OnEnterScene;
-            game.OnWrongInput += OnWrongInput;
-            game.OnAction += OnAction;
+            game.OnEnterScene -= OnEnterScene;
+            game.OnWrongInput -= OnWrongInput;
+            game.OnAction -= OnAction;
+            game.OnDialog -= OnDialog;
+            game.OnWrongDialogInput -= OnWrongDialogInput;
         }
 
-        const string clearText = "\n\n\n\n\n\n\n\n\n\n";
+        const string clearText = "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
         const string CallToActionText = "What do you want to do?";
+        const string CallToAnswerText = "What do you want to say?";
+        const string DialogEndedText = "You stop speaking to this person.";
         const string InvalidInputText = "Your Input was not valid!\n Use 'help' to display all actions.";
+        const string InvalidDialogInputText = "Your Dialog Input was not valid!\n";
         private void OnEnterScene(MainGame game, Scene scene)
         {
             Console.WriteLine($"[{game.Client.GetID()}] - OnEnterScene: {scene.Id}");
@@ -152,9 +160,41 @@ namespace Adventure.Server.Sockets
             if (result.Description != null && result.Description.Length > 0)
             {
                 Console.WriteLine($"[{game.Client.GetID()}] - OnAction");
-                Send(new PrintTextCommand($"{result.Description}\n\n{CallToActionText}"), game.Client.GetClient());
+                Send(new PrintTextCommand($"\n\n{result.Description}\n\n{CallToActionText}"), game.Client.GetClient());
                 Send(new TextInputCommand(), game.Client.GetClient());
             }
+        }
+
+        private void OnDialog(MainGame game, DialogResult result)
+        {
+            Console.WriteLine($"[{game.Client.GetID()}] - OnDialog");
+            if (result != null && result.Description != null && result.Description.Length > 0 && result.Next != null)
+            {
+                var results = "";
+                foreach (var action in result.Next.Results)
+                {
+                    results += action.Parameter + " ";
+                }
+                Send(new PrintTextCommand($"\n\n{result.Description}\n\n{CallToAnswerText} [{results.Trim()}]"), game.Client.GetClient());
+                Send(new TextInputCommand(), game.Client.GetClient());
+            }
+            else
+            {
+                Send(new PrintTextCommand($"\n\n{DialogEndedText}\n\n{CallToActionText}"), game.Client.GetClient());
+                Send(new TextInputCommand(), game.Client.GetClient());
+            }
+        }
+
+        private void OnWrongDialogInput(MainGame game, DialogElement element)
+        {
+            Console.WriteLine($"[{game.Client.GetID()}] - OnWrongDialogInput");
+            var results = "";
+            foreach (var action in element.Results)
+            {
+                results += action.Parameter + " ";
+            }
+            Send(new PrintTextCommand($"\n\n{InvalidDialogInputText}{element.Text}\n\n{CallToAnswerText} [{results.Trim()}]"), game.Client.GetClient());
+            Send(new TextInputCommand(), game.Client.GetClient());
         }
     }
 }

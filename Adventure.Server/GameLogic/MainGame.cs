@@ -1,5 +1,6 @@
 using Adventure.Server.Sockets;
 using Adventure.Server.GameLogic.Actions;
+using Adventure.Server.GameLogic.Dialog;
 using Adventure.Server.GameLogic.Scenes;
 using System.Collections.Generic;
 
@@ -19,6 +20,8 @@ namespace Adventure.Server.GameLogic
         public event GameEventHandler<Scene> OnEnterScene;
         public event GameEventHandler<Scene> OnWrongInput;
         public event GameEventHandler<ActionResult> OnAction;
+        public event GameEventHandler<DialogResult> OnDialog;
+        public event GameEventHandler<DialogElement> OnWrongDialogInput;
 
         public GameStatus Status { get; }
         public SocketConnection Client { get; private set; }
@@ -26,6 +29,7 @@ namespace Adventure.Server.GameLogic
         public IReadOnlyDictionary<string, Scene> Scenes => _scenes;
 
         private Scene _currentScene;
+        private DialogElement _currentDialog;
         public Player player { get; }
 
         private readonly Dictionary<string, Scene> _scenes = new Dictionary<string, Scene>();
@@ -45,6 +49,16 @@ namespace Adventure.Server.GameLogic
             return _currentScene;
         }
 
+        public DialogElement GetCurrentDialog()
+        {
+            return _currentDialog;
+        }
+
+        public void SetCurrentDialog(DialogElement element)
+        {
+            _currentDialog = element;
+        }
+
         public void EnterScene(string id)
         {
             if (_scenes.TryGetValue(id, out var scene))
@@ -59,14 +73,47 @@ namespace Adventure.Server.GameLogic
 
         public void PerformAction(string action)
         {
-            try
+            if (_currentDialog == null)
             {
-                var result = _currentScene.PerformAction(action);
-                OnAction?.Invoke(this, result);
+                try
+                {
+                    var result = _currentScene.PerformAction(action);
+                    if (_currentDialog != null)
+                    {
+                        var dialogResult = new DialogResult("", _currentDialog);
+                        dialogResult.Description = _currentDialog.Text;
+                        OnDialog?.Invoke(this, dialogResult);
+                    }
+                    else
+                    {
+                        OnAction?.Invoke(this, result);
+                    }
+                }
+                catch (ActionNotValidException e)
+                {
+                    OnWrongInput?.Invoke(this, _currentScene);
+                }
             }
-            catch (ActionNotValidException e)
+            else
             {
-                OnWrongInput?.Invoke(this, _currentScene);
+                // TODO Error on end of conversation
+                try
+                {
+                    var result = _currentDialog.Perform(action);
+                    if (result == null || result.Description == null || result.Description.Length > 0 || result.Next == null)
+                    {
+                        _currentDialog = null;
+                    }
+                    else
+                    {
+                        _currentDialog = result.Next;
+                    }
+                    OnDialog?.Invoke(this, result);
+                }
+                catch (WrongDialogInputException e)
+                {
+                    OnWrongDialogInput?.Invoke(this, _currentDialog);
+                }
             }
         }
 
@@ -92,9 +139,18 @@ namespace Adventure.Server.GameLogic
             var description = @"You are in a dark forest.";
 
             List<Action> actions = new List<Action>();
+            List<Npc> npcs = new List<Npc>();
+
+            var options = new List<DialogResult>();
+            options.Add(new YesDialogResult(new DialogElement("UwU, why are you so stupid...", new List<DialogResult>() { new OkDialogResult(null) })));
+            options.Add(new NoDialogResult(new DialogElement("OwO, have a nice day. ^^", new List<DialogResult>() { new OkDialogResult(null) })));
+
+            var dialog = new DialogElement("Are you stupid?", options);
+
+            npcs.Add(new Npc("Jeremy-Pascal", "There is a big old guy with a very depressed look and a giant Chainsaw.", dialog));
             actions.Add(new SwitchSceneAction(new SwitchSceneResult(this, "house", "city"), "left", "right"));
 
-            return new Scene("forest", description, actions, this);
+            return new Scene("forest", description, actions, this, npcs);
         }
 
         private Scene CreateHouseScene()
